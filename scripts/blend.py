@@ -13,7 +13,11 @@ import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 
-PROJECT_ROOT = Path(__file__).resolve().parents[4]  # scripts/ → skill/ → skills/ → .claude/ → quantskills/
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_SKILLS_DIR = _SCRIPT_DIR.parent.parent
+_PANDADATA_SCRIPTS = _SKILLS_DIR / "skill-pandadata-api" / "scripts"
+if _PANDADATA_SCRIPTS.is_dir():
+    sys.path.insert(0, str(_PANDADATA_SCRIPTS))
 COMBINE_STATE_FILENAME = "combine_state.pkl"
 COMBINE_REPORT_FILENAME = "combine_report.json"
 
@@ -158,9 +162,9 @@ def interactive_weight_selection(scheme_arg: str = None) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="多因子信号层合并")
-    parser.add_argument("--factor-dir", default=str(PROJECT_ROOT / "data/factors"),
-                        help="因子输入目录")
-    parser.add_argument("--output-dir", default=str(PROJECT_ROOT / "data"),
+    parser.add_argument("--factor-dir", default="data/factors",
+                        help="因子输入目录（相对于工作目录或绝对路径）")
+    parser.add_argument("--output-dir", default="data",
                         help="合成因子输出目录")
     parser.add_argument("--weight", choices=["equal", "icir", "score"],
                         help="权重方案（不指定则交互式询问）")
@@ -194,8 +198,11 @@ def main():
 
     # 2. 快速 ICIR 估计（用 forward_ret_5d）
     print("\n计算因子 ICIR...")
-    sys.path.insert(0, str(PROJECT_ROOT / ".claude/skills/skill-pandadata-api/scripts"))
-    from pandadata_runtime import init_pandadata
+    try:
+        from pandadata_runtime import init_pandadata
+    except ImportError:
+        print('❌ 无法导入 pandadata_runtime。请确保 skill-pandadata-api 已安装。')
+        sys.exit(1)
     pd_api = init_pandadata()
     raw = pd_api.get_stock_daily(start_date=args.start_date, end_date=args.end_date, fields=[], indicator=args.indicator, st=False)
     raw["date"] = pd.to_datetime(raw["date"], format="%Y%m%d")
