@@ -14,8 +14,8 @@ import pandas as pd
 from scipy.stats import spearmanr
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]  # scripts/ → skill/ → skills/ → .claude/ → quantskills/
-COMBINE_STATE_PATH = PROJECT_ROOT / "data/combine_state.pkl"
-COMBINE_REPORT_PATH = PROJECT_ROOT / "data/combine_report.json"
+COMBINE_STATE_FILENAME = "combine_state.pkl"
+COMBINE_REPORT_FILENAME = "combine_report.json"
 
 WEIGHT_SCHEMES = {
     "equal": "等权 — 所有因子权重相同，适合因子质量接近的场景",
@@ -66,7 +66,7 @@ def factor_correlation(factors: dict) -> pd.DataFrame:
             if len(common) < 30:
                 corr.loc[a, b] = corr.loc[b, a] = np.nan
                 continue
-            corr.loc[a, b] = corr.loc[b, a] = factors[a].loc[common].corr(factors[b].loc[common])
+            corr.loc[a, b] = corr.loc[b, a] = factors[a].loc[common].corr(factors[b].loc[common], method="spearman")
     return corr
 
 
@@ -166,6 +166,12 @@ def main():
                         help="权重方案（不指定则交互式询问）")
     parser.add_argument("--corr-threshold", type=float, default=0.7,
                         help="去冗余相关性阈值")
+    parser.add_argument("--indicator", default="000300",
+                        help="Pandadata 股票池指数代码 (默认 000300=沪深300)")
+    parser.add_argument("--start-date", default="20201201",
+                        help="Pandadata 起始日期 YYYYMMDD")
+    parser.add_argument("--end-date", default="20250131",
+                        help="Pandadata 结束日期 YYYYMMDD")
     args = parser.parse_args()
 
     factor_dir = Path(args.factor_dir)
@@ -188,11 +194,10 @@ def main():
 
     # 2. 快速 ICIR 估计（用 forward_ret_5d）
     print("\n计算因子 ICIR...")
-    from pathlib import Path as _P
     sys.path.insert(0, str(PROJECT_ROOT / ".claude/skills/skill-pandadata-api/scripts"))
     from pandadata_runtime import init_pandadata
     pd_api = init_pandadata()
-    raw = pd_api.get_stock_daily(start_date="20201201", end_date="20250131", fields=[], indicator="000300", st=False)
+    raw = pd_api.get_stock_daily(start_date=args.start_date, end_date=args.end_date, fields=[], indicator=args.indicator, st=False)
     raw["date"] = pd.to_datetime(raw["date"], format="%Y%m%d")
     raw.columns = [c.lower() for c in raw.columns]
     raw = raw.sort_values(["symbol", "date"])
@@ -257,8 +262,10 @@ def main():
         "n_factors_original": len(factor_files),
         "n_factors_after_dedup": len(factors),
     }
-    pickle.dump(state, COMBINE_STATE_PATH.open("wb"))
-    json.dump(state, COMBINE_REPORT_PATH.open("w"), indent=2, ensure_ascii=False, default=str)
+    st_path = output_dir / COMBINE_STATE_FILENAME
+    rp_path = output_dir / COMBINE_REPORT_FILENAME
+    pickle.dump(state, st_path.open("wb"))
+    json.dump(state, rp_path.open("w"), indent=2, ensure_ascii=False, default=str)
 
     # 8. 快速评价
     print(f"\n复合因子快速评价:")
@@ -270,8 +277,8 @@ def main():
 
     print(f"\n✅ 合并完成")
     print(f"   复合因子: {out_path}")
-    print(f"   中间态: {COMBINE_STATE_PATH}")
-    print(f"   报告: {COMBINE_REPORT_PATH}")
+    print(f"   中间态: {st_path}")
+    print(f"   报告: {rp_path}")
 
 
 if __name__ == "__main__":
