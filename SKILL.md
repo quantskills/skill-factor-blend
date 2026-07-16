@@ -32,6 +32,53 @@ quantSkills:
   repository: https://github.com/quantskills/skill-factor-blend
 ---
 
+```json qsh-form
+{
+  "version": 1,
+  "task": {
+    "placeholder": "说明待合并的因子及其评估报告，或上传因子矩阵和 ScoreReport",
+    "required": true
+  },
+  "fields": [
+    {
+      "key": "universe",
+      "label": "股票池",
+      "type": "select",
+      "default": "000300.SH",
+      "options": [
+        { "value": "000300.SH", "label": "沪深300" },
+        { "value": "000905.SH", "label": "中证500" },
+        { "value": "399006.SZ", "label": "创业板指" },
+        { "value": "000852.SH", "label": "中证1000" }
+      ]
+    },
+    {
+      "key": "horizon",
+      "label": "预测周期",
+      "type": "select",
+      "default": "5",
+      "options": [
+        { "value": "1", "label": "未来 1 日" },
+        { "value": "5", "label": "未来 5 日" },
+        { "value": "10", "label": "未来 10 日" }
+      ]
+    },
+    {
+      "key": "weighting",
+      "label": "加权方式",
+      "type": "select",
+      "default": "equal",
+      "options": [
+        { "value": "equal", "label": "等权" },
+        { "value": "icir", "label": "ICIR 加权" },
+        { "value": "score", "label": "综合评分加权" }
+      ]
+    }
+  ],
+  "prompt_template": "{{#task}}任务与材料：\n{{task}}\n\n{{/task}}{{#attachments}}用户上传的材料（已放入工作区）：\n{{attachments}}\n\n{{/attachments}}在 {{universe}}、未来 {{horizon}} 日的统一口径下合并多个已评估因子，先按相关性和 Top-bucket overlap 去冗余，再采用 {{weighting}} 生成逐日截面 z-score 复合信号；不得把信号合并误作组合资金配置，并重新评估复合因子的贡献、稳定性、换手与风险，输出中文报告。"
+}
+```
+
 # 多因子合并 (Factor Signal Blending)
 
 > 给定多个候选因子 `[date × symbol × factor]` 和各自评价报告，将多个因子信号**合并**为一个**可评价、可解释、可复现**的复合 Alpha 信号。
