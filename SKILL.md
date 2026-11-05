@@ -28,7 +28,7 @@ quantSkills:
   maintainer_type: community
   summary_zh: 多因子信号层合并：去冗余（相关矩阵 + Top-bucket overlap）→ 等权/ICIR/Score 三种加权方案 → 逐日截面 z-score 合成 → 重新评价复合因子。信号层操作（产出 composite_signal），非组合层资金分配。
   summary_en: "Multi-factor signal-level blending: redundancy removal via correlation matrix and top-bucket overlap, three weighting schemes (equal/ICIR/score), daily cross-sectional z-score synthesis, and composite re-evaluation. Signal-level only — outputs composite_signal, not portfolio weights."
-  license: GPL-3.0
+  license: GPL-3.0-only
   repository: https://github.com/quantskills/skill-factor-blend
 ---
 
@@ -228,3 +228,7 @@ data/factors/F*.parquet（或 factors_orthogonalized/）
 - **已知限制**：复合信号容易过拟合；合并表现依赖样本期、交易成本、股票池和单因子质量，不能保证未来有效。
 - **风险边界**：合并权重、回测净值和综合评分仅反映历史数据 + 假设条件下的统计表现，不代表未来表现。合并结果仅为信号（截面 z-score），不构成持仓建议。
 - **用途定位**：仅供量化研究、教育与方法论参考。不构成任何形式的投资建议、交易信号或获利保证。
+
+## Pandadata compatibility
+
+[Pandadata 1.0.6 compatibility](references/pandadata-compatibility.md) — exact SDK baseline, validation scope, and shared guidance for all supported agent runtimes.
